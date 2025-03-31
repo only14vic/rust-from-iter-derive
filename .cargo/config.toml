@@ -1,0 +1,38 @@
+[install]
+root = "."
+
+[term]
+quiet = false
+verbose = false
+progress.when = 'auto'
+
+[build]
+rustc-wrapper = "sccache"
+# Uncomment if you want to compile static binary
+#target = "x86_64-unknown-linux-musl"
+#target = "x86_64-unknown-linux-gnu"
+
+rustflags = [
+  #"-Cprefer-dynamic",
+  "-Ctarget-cpu=native",
+  "-Clinker-plugin-lto",
+  "-Clink-arg=-fuse-ld=lld",
+  "-Clink-args=-lclang",
+  "-Clink-args=-Wl,-rpath,$ORIGIN,-rpath,$ORIGIN/lib,-rpath,$ORIGIN/../lib",
+  #"-Cpanic=abort",
+  # Set "unwind" if using stdlib
+  "-Cpanic=unwind",
+  "--verbose",
+]
+
+# Use it for stdlib
+#rustflags = [
+#  #"-Cprefer-dynamic",
+#  "-Ctarget-cpu=native",
+#  "-Clinker-plugin-lto",
+#  "-Clink-arg=-fuse-ld=lld",
+#  "-Clink-args=-lclang",
+#  "-Clink-args=-Wl,-rpath,$ORIGIN,-rpath,$ORIGIN/lib,-rpath,$ORIGIN/../lib",
+#  "-Cpanic=unwind",
+#  "--verbose",
+#]
