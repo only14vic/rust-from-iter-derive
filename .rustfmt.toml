@@ -1,5 +1,5 @@
-edition = "2024"
-style_edition = "2024"
+edition = "2021"
+style_edition = "2021"
 max_width = 90
 fn_call_width = 60
 chain_width = 60
@@ -20,7 +20,7 @@ trailing_comma = "Never"
 format_code_in_doc_comments = true
 format_strings = false
 format_macro_matchers = true
-format_macro_bodies = false
+format_macro_bodies = true
 normalize_doc_attributes = true
 wrap_comments = true
 unstable_features = false

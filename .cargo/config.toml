@@ -8,10 +8,6 @@ progress.when = 'auto'
 
 [build]
 rustc-wrapper = "sccache"
-# Uncomment if you want to compile static binary
-#target = "x86_64-unknown-linux-musl"
-#target = "x86_64-unknown-linux-gnu"
-
 rustflags = [
   #"-Cprefer-dynamic",
   "-Ctarget-cpu=native",

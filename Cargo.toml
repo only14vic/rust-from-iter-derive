@@ -1,5 +1,5 @@
 [package]
-name = "from-map-derive"
+name = "from-iter-derive"
 version = "0.1.0"
 edition = "2021"
 
@@ -8,7 +8,6 @@ opt-level = 0
 debug = true
 incremental = true
 lto = "fat"
-#panic = "abort"
 overflow-checks = true
 rpath = true
 
@@ -16,7 +15,6 @@ rpath = true
 opt-level = "z"
 strip = "debuginfo"
 lto = "thin"
-#panic = "abort"
 codegen-units = 1
 overflow-checks = true
 rpath = true

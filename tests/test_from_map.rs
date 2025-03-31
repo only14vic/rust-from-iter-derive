@@ -1,8 +1,8 @@
 extern crate alloc;
 
-use {from_map_derive::FromMap, std::collections::BTreeMap};
+use from_iter_derive::FromIter;
 
-#[derive(Debug, Default, FromMap)]
+#[derive(Debug, Default, FromIter)]
 struct Foo {
     a: String,
     b: Option<u32>,
@@ -10,21 +10,42 @@ struct Foo {
     d: Option<char>,
     e: f32,
     f: Box<str>,
-    g: Box<[char]>,
-    h: Option<String>
+    g: Vec<Box<str>>,
+    h: Option<String>,
+    bar: Bar,
+    zar: Option<Zar>
 }
 
-#[derive(Debug, Default, FromMap)]
+#[derive(Debug, Default, FromIter)]
 struct Bar {
     x: Box<str>,
-    y: f32
+    y: f32,
+    z: Zar
+}
+
+#[derive(Debug, Default, FromIter)]
+struct Zar {
+    a: Option<i32>,
+    b: Option<Vec<i32>>
 }
 
 #[test]
 fn test_from_map() {
-    for (name, ty) in Foo::struct_fields() {
-        println!("{name}: {ty}");
-    }
+    assert_eq!(
+        Foo::struct_fields().collect::<Vec<(&str, &str)>>(),
+        vec![
+            ("a", "String"),
+            ("b", "Option < u32 >"),
+            ("c", "bool"),
+            ("d", "Option < char >"),
+            ("e", "f32"),
+            ("f", "Box < str >"),
+            ("g", "Vec < Box < str > >"),
+            ("h", "Option < String >"),
+            ("bar", "Bar"),
+            ("zar", "Option < Zar >")
+        ]
+    );
 
     let values: Vec<(&str, Option<&str>)> = vec![
         ("a", "   Hello  ".into()),
@@ -33,13 +54,30 @@ fn test_from_map() {
         ("d", "    X   ".into()),
         ("e", "  1.23  ".into()),
         ("f", "  World  ".into()),
-        ("g", "Yes".into()),
+        ("g", "a , b , c ".into()),
         ("h", None),
+        ("bar.x", "This is Bar".into()),
+        ("bar.y", "  9.999".into()),
+        ("bar.z.a", "  -1111 ".into()),
+        ("bar.z.b", "  -123, 0, 123 ".into()),
+        ("zar.a", " -333 ".into()),
     ];
 
-    let mut map = BTreeMap::from_iter(values.clone().into_iter());
-    map.remove("a");
-
     let foo = Foo::from_iter(values);
-    dbg!(foo);
+
+    assert_eq!(foo.a, "Hello");
+    assert_eq!(foo.b, Some(123));
+    assert_eq!(foo.c, true);
+    assert_eq!(foo.d, Some('X'));
+    assert_eq!(foo.e, 1.23);
+    assert_eq!(foo.g, vec!["a".into(), "b".into(), "c".into()]);
+    assert_eq!(foo.h, None);
+    assert_eq!(foo.bar.x, "This is Bar".into());
+    assert_eq!(foo.bar.y, 9.999);
+    assert_eq!(foo.bar.z.a, Some(-1111));
+    assert_eq!(foo.bar.z.b, Some(vec![-123, 0, 123]));
+
+    assert!(foo.zar.is_some());
+    assert_eq!(foo.zar.as_ref().unwrap().a, Some(-333));
+    assert_eq!(foo.zar.as_ref().unwrap().b, None);
 }

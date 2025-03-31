@@ -10,11 +10,11 @@ use {
     alloc::string::ToString,
     proc_macro::TokenStream,
     proc_macro2::Span,
-    quote::{ToTokens, quote},
-    syn::{Data, DeriveInput, Fields, Ident, parse_macro_input}
+    quote::{quote, ToTokens},
+    syn::{parse_macro_input, Data, DeriveInput, Fields, Ident}
 };
 
-#[proc_macro_derive(FromMap)]
+#[proc_macro_derive(FromIter)]
 pub fn derive_iterable(input: TokenStream) -> TokenStream {
     let input = parse_macro_input!(input as DeriveInput);
 
@@ -44,36 +44,74 @@ pub fn derive_iterable(input: TokenStream) -> TokenStream {
         let field_ident = &field.ident;
         let field_name = field.ident.as_ref().unwrap().to_string();
         let field_type = field.ty.to_token_stream().to_string();
-        let field_value = match field_type
-            .as_str()
-            .trim_start_matches("Option ")
-            .trim_start_matches("Box ")
-            .trim_start_matches("Arc ")
-            .trim_start_matches("Rc ")
-            .trim_start_matches("RefCell ")
-            .trim_start_matches("Cell ")
-            .trim_matches(['<', '>', ' '])
-        {
-            ty @ ("bool" | "i8" | "i16" | "i32" | "i64" | "u8" | "u16" | "u32"
-            | "u64" | "f32" | "f64") => {
+        let mut field_type_str = field_type.as_str();
+
+        const TRIM_TYPES: [&str; 8] = ["Option ", "Box ", "Arc ", "Rc ", "RefCell ", "Cell ", "NonZero ", "NonNull "];
+        const TRIM_TYPE_SYMBOLS: [char; 4] = ['<', '>', ' ', '&'];
+        const TRIM_TYPE_EXTRA_SYMBOLS: [char; 6] = ['<', '>', ' ', '&', '[', ']'];
+
+        loop {
+            for ty in TRIM_TYPES {
+                field_type_str = field_type_str.trim_start_matches(ty).trim_matches(TRIM_TYPE_SYMBOLS);
+            }
+
+            if TRIM_TYPES.iter().any(|&ty| field_type_str.starts_with(ty)) == false {
+                break;
+            }
+        }
+
+        //dbg!(field_type_str);
+
+        let mut is_field_struct = false;
+
+        let field_value = match field_type_str {
+            ty @ ("bool" | "i8" | "i16" | "i32" | "i64" | "i128" | "u8" | "u16" | "u32"
+            | "u64" | "u128" | "f32" | "f64" | "isize" | "usize") => {
                 let ty = Ident::new(ty, Span::call_site());
                 quote! { v.parse::<#ty>().unwrap().into() }
             },
             "char" => quote! { v.chars().next().unwrap_or_default().into() },
             "str" => quote! { v.into() },
             "String" => quote! { v.to_string().into() },
-            sty if sty.starts_with('[') && sty.ends_with(']') => {
-                let ty = Ident::new(sty.trim_matches(['[', ']']), Span::call_site());
-                quote! { v.chars().map(|c| c as #ty).collect() }
+            mut vty if vty.starts_with("Vec ") || vty.starts_with('[') && vty.ends_with(']') => {
+                vty = vty.trim_start_matches("Vec");
+                for ty in TRIM_TYPES {
+                    vty = vty.trim_start_matches(ty).trim_matches(TRIM_TYPE_EXTRA_SYMBOLS);
+                }
+                match vty {
+                    "String" | "str" => quote! { v.split_terminator(',').map(|s| s.trim().into()).collect::<Vec<_>>().into() },
+                    _ => quote! { v.split_terminator(',').map(|s| s.trim().parse().unwrap()).collect::<Vec<_>>().into() },
+                }
             },
-            _ => quote! { v.into() }
+            ty => {
+                is_field_struct = true;
+                let ty = Ident::new(ty, Span::call_site());
+                quote! {{
+                    let sub_map = map
+                        .iter_mut()
+                        .filter_map(|(name, value)| {
+                            name.starts_with(concat!(#field_name, "."))
+                                .then(|| (name.trim_start_matches(concat!(#field_name, ".")), value.take()))
+                        })
+                        .collect::<alloc::vec::Vec<_>>();
+                    #ty::from_iter(sub_map).into()
+                }}
+            }
         };
 
-        quote! {
-            if let Some(Some(mut v)) = map.remove(#field_name).take() {
-                v = v.trim();
-                if v.is_empty() == false {
+        if is_field_struct {
+            quote! {
+                if map.iter().any(|(name,..)| name.starts_with(concat!(#field_name,"."))) {
                     this.#field_ident = #field_value;
+                }
+            }
+        } else {
+            quote! {
+                if let Some(Some(mut v)) = map.remove(#field_name).take() {
+                    v = v.trim();
+                    if v.is_empty() == false {
+                        this.#field_ident = #field_value;
+                    }
                 }
             }
         }
@@ -91,7 +129,7 @@ pub fn derive_iterable(input: TokenStream) -> TokenStream {
                 let mut this: Self = Default::default();
                 let mut map = alloc::collections::BTreeMap::from_iter(iter.into_iter());
 
-                dbg!(&map);
+                //dbg!(&map);
 
                 #(#fields_set)*
 
