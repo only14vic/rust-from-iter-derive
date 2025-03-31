@@ -1,14 +1,18 @@
 extern crate alloc;
 
-use from_iter_derive::FromIter;
+use {
+    core::cell::RefCell,
+    from_iter_derive::FromIter,
+    std::{rc::Rc, sync::Arc}
+};
 
 #[derive(Debug, Default, FromIter)]
 struct Foo {
     a: String,
     b: Option<u32>,
-    c: bool,
+    c: Arc<bool>,
     d: Option<char>,
-    e: f32,
+    e: Rc<f32>,
     f: Box<str>,
     g: Vec<Box<str>>,
     h: Option<String>,
@@ -19,7 +23,7 @@ struct Foo {
 #[derive(Debug, Default, FromIter)]
 struct Bar {
     x: Box<str>,
-    y: f32,
+    y: RefCell<f32>,
     z: Zar
 }
 
@@ -36,9 +40,9 @@ fn test_from_map() {
         vec![
             ("a", "String"),
             ("b", "Option < u32 >"),
-            ("c", "bool"),
+            ("c", "Arc < bool >"),
             ("d", "Option < char >"),
-            ("e", "f32"),
+            ("e", "Rc < f32 >"),
             ("f", "Box < str >"),
             ("g", "Vec < Box < str > >"),
             ("h", "Option < String >"),
@@ -64,16 +68,17 @@ fn test_from_map() {
     ];
 
     let foo = Foo::from_iter(values);
+    dbg!(&foo);
 
     assert_eq!(foo.a, "Hello");
     assert_eq!(foo.b, Some(123));
-    assert_eq!(foo.c, true);
+    assert_eq!(foo.c, true.into());
     assert_eq!(foo.d, Some('X'));
-    assert_eq!(foo.e, 1.23);
+    assert_eq!(foo.e, 1.23.into());
     assert_eq!(foo.g, vec!["a".into(), "b".into(), "c".into()]);
     assert_eq!(foo.h, None);
     assert_eq!(foo.bar.x, "This is Bar".into());
-    assert_eq!(foo.bar.y, 9.999);
+    assert_eq!(foo.bar.y, 9.999.into());
     assert_eq!(foo.bar.z.a, Some(-1111));
     assert_eq!(foo.bar.z.b, Some(vec![-123, 0, 123]));
 
