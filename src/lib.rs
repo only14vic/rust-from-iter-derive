@@ -46,7 +46,7 @@ pub fn derive_iterable(input: TokenStream) -> TokenStream {
         let field_type = field.ty.to_token_stream().to_string();
         let mut field_type_str = field_type.as_str();
 
-        const TRIM_TYPES: [&str; 8] = ["Option ", "Box ", "Arc ", "Rc ", "RefCell ", "Cell ", "NonZero ", "NonNull "];
+        const TRIM_TYPES: [&str; 8] = ["Option <", "Box <", "Arc <", "Rc <", "RefCell <", "Cell <", "NonZero <", "NonNull <"];
         const TRIM_TYPE_SYMBOLS: [char; 4] = ['<', '>', ' ', '&'];
         const TRIM_TYPE_EXTRA_SYMBOLS: [char; 6] = ['<', '>', ' ', '&', '[', ']'];
 
@@ -66,19 +66,19 @@ pub fn derive_iterable(input: TokenStream) -> TokenStream {
 
         let field_value = match field_type_str {
             ty @ ("bool" | "i8" | "i16" | "i32" | "i64" | "i128" | "u8" | "u16" | "u32"
-            | "u64" | "u128" | "f32" | "f64" | "isize" | "usize") => {
+            | "u64" | "u128" | "f32" | "f64" | "f128" | "isize" | "usize") => {
                 let ty = Ident::new(ty, Span::call_site());
                 quote! { v.parse::<#ty>().unwrap().into() }
             },
             "char" => quote! { v.chars().next().unwrap_or_default().into() },
             "str" => quote! { v.into() },
             "String" => quote! { v.to_string().into() },
-            mut vty if vty.starts_with("Vec ") || vty.starts_with('[') && vty.ends_with(']') => {
-                vty = vty.trim_start_matches("Vec");
-                for ty in TRIM_TYPES {
-                    vty = vty.trim_start_matches(ty).trim_matches(TRIM_TYPE_EXTRA_SYMBOLS);
+            mut ty if ty.starts_with("Vec ") || ty.starts_with('[') && ty.ends_with(']') => {
+                ty = ty.trim_start_matches("Vec");
+                for prefix in TRIM_TYPES {
+                    ty = ty.trim_start_matches(prefix).trim_matches(TRIM_TYPE_EXTRA_SYMBOLS);
                 }
-                match vty {
+                match ty {
                     "String" | "str" => quote! { v.split_terminator(',').map(|s| s.trim().into()).collect::<Vec<_>>().into() },
                     _ => quote! { v.split_terminator(',').map(|s| s.trim().parse().unwrap()).collect::<Vec<_>>().into() },
                 }
