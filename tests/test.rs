@@ -9,12 +9,15 @@ use {
         marker::PhantomData,
         num::NonZero
     },
-    from_iter_derive::SetFromIter
+    set_from_iter_derive::SetFromIter
 };
 
 #[derive(Debug, Default, SetFromIter)]
-struct Foo<'a, 'b: 'a> {
-    a: String,
+struct Foo<'a, 'b: 'a, T>
+where
+    T: AsRef<str>
+{
+    a: std::string::String,
     b: Option<Box<Option<NonZero<c_uint>>>>,
     c: Arc<bool>,
     d: Option<char>,
@@ -22,16 +25,17 @@ struct Foo<'a, 'b: 'a> {
     f: Option<&'b str>,
     g: Box<Vec<&'a str>>,
     h: Option<String>,
-    bar: Bar,
+    bar: Bar<'b, T>,
     zar: Zar,
-    _phantom: PhantomData<&'b ()>
+    _phantom: PhantomData<&'b T>
 }
 
 #[derive(Debug, Default, SetFromIter)]
-struct Bar {
-    x: Box<str>,
+struct Bar<'b, T> {
+    x: &'b str,
     y: RefCell<c_float>,
-    z: Zar
+    z: Zar,
+    _phantom: PhantomData<&'b T>
 }
 
 #[derive(Debug, Default, SetFromIter)]
@@ -43,9 +47,9 @@ struct Zar {
 #[test]
 fn test_from_map() -> Result<(), Box<dyn Error>> {
     assert_eq!(
-        &Foo::struct_fields()[..2],
+        &Foo::<String>::struct_fields()[..2],
         &[
-            ("a", "String"),
+            ("a", "std :: string :: String"),
             ("b", "Option < Box < Option < NonZero < c_uint > > > >"),
         ]
     );
@@ -66,7 +70,7 @@ fn test_from_map() -> Result<(), Box<dyn Error>> {
         ("zar.a", " -333 ".into()),
     ];
 
-    let mut foo = Foo::default();
+    let mut foo = Foo::<String>::default();
     foo.h = Some("Predefined value".into());
     foo.zar.b = Some(vec![1, 2, 3].into());
 
@@ -81,7 +85,7 @@ fn test_from_map() -> Result<(), Box<dyn Error>> {
     assert_eq!(foo.f, "World".into());
     assert_eq!(foo.g, vec!["a", "b", "c"].into());
     assert_eq!(foo.h, Some("Predefined value".into()));
-    assert_eq!(foo.bar.x, "This is Bar".into());
+    assert_eq!(foo.bar.x, "This is Bar");
     assert_eq!(foo.bar.y, 9.999.into());
     assert_eq!(foo.bar.z.a, Some(-1111));
     assert_eq!(foo.bar.z.b, Some(vec![-123, 0, 123].into()));

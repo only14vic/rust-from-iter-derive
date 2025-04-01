@@ -1,5 +1,5 @@
 [package]
-name = "from-iter-derive"
+name = "set-from-iter-derive"
 version = "0.1.0"
 edition = "2021"
 

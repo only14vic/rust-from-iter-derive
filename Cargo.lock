@@ -3,16 +3,6 @@
 version = 4
 
 [[package]]
-name = "from-iter-derive"
-version = "0.1.0"
-dependencies = [
- "libc-print",
- "proc-macro2",
- "quote",
- "syn",
-]
-
-[[package]]
 name = "libc"
 version = "0.2.171"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -43,6 +33,16 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "1885c039570dc00dcb4ff087a89e185fd56bae234ddc7f056a945bf36467248d"
 dependencies = [
  "proc-macro2",
+]
+
+[[package]]
+name = "set-from-iter-derive"
+version = "0.1.0"
+dependencies = [
+ "libc-print",
+ "proc-macro2",
+ "quote",
+ "syn",
 ]
 
 [[package]]

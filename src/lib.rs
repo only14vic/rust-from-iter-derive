@@ -53,7 +53,10 @@ pub fn derive_iterable(input: TokenStream) -> TokenStream {
             return quote! {};
         }
 
-        let field_type = field.ty.to_token_stream().to_string();
+        let mut field_type = field.ty.to_token_stream().to_string();
+        while let Some(p) = field_type.find("< '") {
+            field_type.replace_range(p ..= p + field_type[p..].find('>').unwrap(), "");
+        }
         let mut field_type_inner = field_type.get(
             field_type.rfind('<').map(|i| i+1).unwrap_or(0)
             ..field_type.find('>').unwrap_or(field_type.len())
@@ -68,7 +71,7 @@ pub fn derive_iterable(input: TokenStream) -> TokenStream {
             field_type_inner
         };
 
-        //dbg!(field_type_str, field_type_inner);
+        //dbg!(&field_type, field_type_str, field_type_inner);
 
         let mut is_field_struct = false;
 
@@ -107,7 +110,7 @@ pub fn derive_iterable(input: TokenStream) -> TokenStream {
                     }},
                 }
             },
-            ty if ty.contains(['<',':','\'']) == false => {
+            ty if ty.contains([':','\'']) == false => {
                 is_field_struct = true;
                 quote! {{
                     let sub_map = map
@@ -164,9 +167,9 @@ pub fn derive_iterable(input: TokenStream) -> TokenStream {
                 &[#(#fields_iter),*]
             }
 
-            fn set_from_iter<#lifetime, T>(&mut self, iter: T) -> Result<(), ::alloc::boxed::Box<dyn ::core::error::Error>>
+            fn set_from_iter<#lifetime, I>(&mut self, iter: I) -> Result<(), ::alloc::boxed::Box<dyn ::core::error::Error>>
             where
-                T: IntoIterator<Item = (&'iter str, Option<&'iter str>)>
+                I: IntoIterator<Item = (&'iter str, Option<&'iter str>)>
             {
                 let mut map = ::alloc::collections::BTreeMap::from_iter(iter.into_iter());
                 //dbg!(&map);
