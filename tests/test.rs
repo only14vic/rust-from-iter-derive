@@ -9,7 +9,8 @@ use {
         marker::PhantomData,
         num::NonZero
     },
-    set_from_iter_derive::SetFromIter
+    set_from_iter_derive::SetFromIter,
+    std::time::Instant
 };
 
 #[derive(Debug, Default, SetFromIter)]
@@ -74,8 +75,13 @@ fn test_from_map() -> Result<(), Box<dyn Error>> {
     foo.h = Some("Predefined value".into());
     foo.zar.b = Some(vec![1, 2, 3].into());
 
-    foo.set_from_iter(values)?;
+    let t = Instant::now();
+    for _ in 0..1 {
+        foo.set_from_iter(values.clone())?;
+    }
+    let time = t.elapsed();
     dbg!(&foo);
+    dbg!(time);
 
     assert_eq!(foo.a, "Hello".to_owned());
     assert_eq!(foo.b, Box::new(NonZero::new(123)).into());

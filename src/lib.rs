@@ -88,7 +88,7 @@ pub fn derive_iterable(input: TokenStream) -> TokenStream {
             "char" => quote! {v.chars().next().unwrap_or_default()},
             "str" => quote! {v},
             "String" => quote! { v.to_string() },
-            ty @ "Vec" => {
+            "Vec" => {
                 let ident = Ident::new(field_type_inner, Span::call_site());
                 match field_type_inner{
                     "String" | "str" => quote! {
@@ -102,7 +102,7 @@ pub fn derive_iterable(input: TokenStream) -> TokenStream {
                             arr.push(
                                 s.trim()
                                     .parse::<#ident>()
-                                    .map_err(|_| concat!("Failed parse '{s}' to type ", #ty).replace("{s}", s))?
+                                    .map_err(|_| concat!("Failed parse '{s}' to type ", #field_type).replace("{s}", s))?
                                     .into()
                             );
                         }
@@ -146,7 +146,7 @@ pub fn derive_iterable(input: TokenStream) -> TokenStream {
             }
         } else {
             quote! {
-                if let Some(Some(mut v)) = map.remove(#field_name).take() {
+                if let Some(Some(mut v)) = map.get_mut(#field_name).take() {
                     v = v.trim();
                     if v.is_empty() == false {
                         self.#field_ident = #field_value;
@@ -169,10 +169,9 @@ pub fn derive_iterable(input: TokenStream) -> TokenStream {
 
             fn set_from_iter<#lifetime, I>(&mut self, iter: I) -> Result<(), ::alloc::boxed::Box<dyn ::core::error::Error>>
             where
-                I: IntoIterator<Item = (&'iter str, Option<&'iter str>)>
+                I: ::core::iter::IntoIterator<Item = (&'iter str, Option<&'iter str>)>
             {
                 let mut map = ::alloc::collections::BTreeMap::from_iter(iter.into_iter());
-                //dbg!(&map);
 
                 #(#fields_set)*
 
