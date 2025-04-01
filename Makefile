@@ -10,5 +10,8 @@ endif
 
 make = make --no-print-directory
 
+expand:
+	cargo expand --test test
+
 test:
 	cargo test $(args) -- --nocapture --color always
