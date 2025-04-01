@@ -1,7 +1,11 @@
 extern crate alloc;
 
 use {
-    core::cell::RefCell,
+    core::{
+        cell::RefCell,
+        ffi::{c_float, c_uint},
+        num::NonZero
+    },
     from_iter_derive::FromIter,
     std::{rc::Rc, sync::Arc}
 };
@@ -9,21 +13,21 @@ use {
 #[derive(Debug, Default, FromIter)]
 struct Foo {
     a: String,
-    b: Option<u32>,
+    b: Option<Box<Option<NonZero<c_uint>>>>,
     c: Arc<bool>,
     d: Option<char>,
-    e: Rc<f32>,
+    e: Option<Box<Rc<RefCell<f32>>>>,
     f: Box<str>,
     g: Vec<Box<str>>,
     h: Option<String>,
     bar: Bar,
-    zar: Option<Zar>
+    zar: Option<Box<Zar>>
 }
 
 #[derive(Debug, Default, FromIter)]
 struct Bar {
     x: Box<str>,
-    y: RefCell<f32>,
+    y: RefCell<c_float>,
     z: Zar
 }
 
@@ -39,15 +43,15 @@ fn test_from_map() {
         Foo::struct_fields().collect::<Vec<(&str, &str)>>(),
         vec![
             ("a", "String"),
-            ("b", "Option < u32 >"),
+            ("b", "Option < Box < Option < NonZero < c_uint > > > >"),
             ("c", "Arc < bool >"),
             ("d", "Option < char >"),
-            ("e", "Rc < f32 >"),
+            ("e", "Option < Box < Rc < RefCell < f32 > > > >"),
             ("f", "Box < str >"),
             ("g", "Vec < Box < str > >"),
             ("h", "Option < String >"),
             ("bar", "Bar"),
-            ("zar", "Option < Zar >")
+            ("zar", "Option < Box < Zar > >")
         ]
     );
 
@@ -70,11 +74,11 @@ fn test_from_map() {
     let foo = Foo::from_iter(values);
     dbg!(&foo);
 
-    assert_eq!(foo.a, "Hello");
-    assert_eq!(foo.b, Some(123));
+    assert_eq!(foo.a, "Hello".to_owned());
+    assert_eq!(foo.b, Box::new(NonZero::new(123)).into());
     assert_eq!(foo.c, true.into());
     assert_eq!(foo.d, Some('X'));
-    assert_eq!(foo.e, 1.23.into());
+    assert_eq!(foo.e, Box::new(Rc::new(RefCell::new(1.23))).into());
     assert_eq!(foo.g, vec!["a".into(), "b".into(), "c".into()]);
     assert_eq!(foo.h, None);
     assert_eq!(foo.bar.x, "This is Bar".into());

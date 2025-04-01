@@ -35,6 +35,10 @@ missing_safety_doc = "allow"
 [lib]
 proc-macro = true
 
+[features]
+default = ["std"]
+std = []
+
 [dependencies]
 syn = "2.0.100"
 quote = "1.0.40"
