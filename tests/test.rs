@@ -25,8 +25,8 @@ where
     e: Option<Box<Rc<RefCell<f32>>>>,
     f: Option<&'b str>,
     g: Box<Vec<&'a str>>,
-    h: Option<Box<str>>,
-    bar: Bar<'b, T>,
+    h: Option<alloc::boxed::Box<str>>,
+    bar: self::Bar<'b, T>,
     zar: Zar,
     _phantom: PhantomData<&'b T>
 }
