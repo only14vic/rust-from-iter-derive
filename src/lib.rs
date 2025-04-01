@@ -71,7 +71,7 @@ pub fn derive_iterable(input: TokenStream) -> TokenStream {
             field_type_inner
         };
 
-        //dbg!(&field_type, field_type_str, field_type_inner);
+        //dbg!(field_type_str, field_type_inner);
 
         let mut is_field_struct = false;
 
@@ -130,8 +130,7 @@ pub fn derive_iterable(input: TokenStream) -> TokenStream {
             if ty.is_empty() == false {
                 let type_ident = Ident::new(ty, Span::call_site());
                 field_value = match ty {
-                    "Option" | "NonNull" => quote! {#type_ident::from(#field_value)},
-                    "Box" if field_type.contains("Box < str >") => quote! {#field_value.into()},
+                    "Option" | "Box" | "NonNull" => quote! {#type_ident::from(#field_value)},
                     "Vec" => field_value,
                     _ => quote! {#type_ident::new(#field_value)}
                 }

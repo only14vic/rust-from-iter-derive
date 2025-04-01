@@ -25,7 +25,7 @@ where
     e: Option<Box<Rc<RefCell<f32>>>>,
     f: Option<&'b str>,
     g: Box<Vec<&'a str>>,
-    h: Option<String>,
+    h: Option<Box<str>>,
     bar: Bar<'b, T>,
     zar: Zar,
     _phantom: PhantomData<&'b T>
@@ -96,7 +96,6 @@ fn test_from_map() -> Result<(), Box<dyn Error>> {
     assert_eq!(foo.bar.y, 9.999.into());
     assert_eq!(foo.bar.z.a, Some(-1111));
     assert_eq!(foo.bar.z.b, Some(vec![-123, 0, 123].into()));
-
     assert_eq!(foo.zar.a, Some(-333));
     assert_eq!(foo.zar.b, Some(vec![1, 2, 3].into()));
 
