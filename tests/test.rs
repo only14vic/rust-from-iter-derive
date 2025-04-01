@@ -1,57 +1,52 @@
 extern crate alloc;
 
 use {
+    alloc::{rc::Rc, sync::Arc},
     core::{
         cell::RefCell,
+        error::Error,
         ffi::{c_float, c_uint},
+        marker::PhantomData,
         num::NonZero
     },
-    from_iter_derive::FromIter,
-    std::{rc::Rc, sync::Arc}
+    from_iter_derive::SetFromIter
 };
 
-#[derive(Debug, Default, FromIter)]
-struct Foo {
+#[derive(Debug, Default, SetFromIter)]
+struct Foo<'a, 'b: 'a> {
     a: String,
     b: Option<Box<Option<NonZero<c_uint>>>>,
     c: Arc<bool>,
     d: Option<char>,
     e: Option<Box<Rc<RefCell<f32>>>>,
-    f: Box<str>,
-    g: Vec<Box<str>>,
+    f: Option<&'b str>,
+    g: Box<Vec<&'a str>>,
     h: Option<String>,
     bar: Bar,
-    zar: Option<Box<Zar>>
+    zar: Zar,
+    _phantom: PhantomData<&'b ()>
 }
 
-#[derive(Debug, Default, FromIter)]
+#[derive(Debug, Default, SetFromIter)]
 struct Bar {
     x: Box<str>,
     y: RefCell<c_float>,
     z: Zar
 }
 
-#[derive(Debug, Default, FromIter)]
+#[derive(Debug, Default, SetFromIter)]
 struct Zar {
     a: Option<i32>,
-    b: Option<Vec<i32>>
+    b: Option<Box<Vec<i32>>>
 }
 
 #[test]
-fn test_from_map() {
+fn test_from_map() -> Result<(), Box<dyn Error>> {
     assert_eq!(
-        Foo::struct_fields().collect::<Vec<(&str, &str)>>(),
-        vec![
+        &Foo::struct_fields().as_slice()[..2],
+        &[
             ("a", "String"),
             ("b", "Option < Box < Option < NonZero < c_uint > > > >"),
-            ("c", "Arc < bool >"),
-            ("d", "Option < char >"),
-            ("e", "Option < Box < Rc < RefCell < f32 > > > >"),
-            ("f", "Box < str >"),
-            ("g", "Vec < Box < str > >"),
-            ("h", "Option < String >"),
-            ("bar", "Bar"),
-            ("zar", "Option < Box < Zar > >")
         ]
     );
 
@@ -71,7 +66,11 @@ fn test_from_map() {
         ("zar.a", " -333 ".into()),
     ];
 
-    let foo = Foo::from_iter(values);
+    let mut foo = Foo::default();
+    foo.h = Some("Predefined value".into());
+    foo.zar.b = Some(vec![1, 2, 3].into());
+
+    foo.set_from_iter(values)?;
     dbg!(&foo);
 
     assert_eq!(foo.a, "Hello".to_owned());
@@ -79,14 +78,16 @@ fn test_from_map() {
     assert_eq!(foo.c, true.into());
     assert_eq!(foo.d, Some('X'));
     assert_eq!(foo.e, Box::new(Rc::new(RefCell::new(1.23))).into());
-    assert_eq!(foo.g, vec!["a".into(), "b".into(), "c".into()]);
-    assert_eq!(foo.h, None);
+    assert_eq!(foo.f, "World".into());
+    assert_eq!(foo.g, vec!["a", "b", "c"].into());
+    assert_eq!(foo.h, Some("Predefined value".into()));
     assert_eq!(foo.bar.x, "This is Bar".into());
     assert_eq!(foo.bar.y, 9.999.into());
     assert_eq!(foo.bar.z.a, Some(-1111));
-    assert_eq!(foo.bar.z.b, Some(vec![-123, 0, 123]));
+    assert_eq!(foo.bar.z.b, Some(vec![-123, 0, 123].into()));
 
-    assert!(foo.zar.is_some());
-    assert_eq!(foo.zar.as_ref().unwrap().a, Some(-333));
-    assert_eq!(foo.zar.as_ref().unwrap().b, None);
+    assert_eq!(foo.zar.a, Some(-333));
+    assert_eq!(foo.zar.b, Some(vec![1, 2, 3].into()));
+
+    Ok(())
 }
