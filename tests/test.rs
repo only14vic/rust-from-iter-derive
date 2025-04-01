@@ -43,7 +43,7 @@ struct Zar {
 #[test]
 fn test_from_map() -> Result<(), Box<dyn Error>> {
     assert_eq!(
-        &Foo::struct_fields().as_slice()[..2],
+        &Foo::struct_fields()[..2],
         &[
             ("a", "String"),
             ("b", "Option < Box < Option < NonZero < c_uint > > > >"),

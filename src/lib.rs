@@ -91,10 +91,10 @@ pub fn derive_iterable(input: TokenStream) -> TokenStream {
                     "String" | "str" => quote! {
                         v.split_terminator(',')
                             .map(|s| s.trim().into())
-                            .collect::<alloc::vec::Vec<_>>()
+                            .collect::<::alloc::vec::Vec<_>>()
                     },
                     _ => quote! {{
-                        let mut arr = alloc::vec::Vec::new();
+                        let mut arr = ::alloc::vec::Vec::new();
                         for s in v.split_terminator(',') {
                             arr.push(
                                 s.trim()
@@ -160,15 +160,15 @@ pub fn derive_iterable(input: TokenStream) -> TokenStream {
 
     let expanded = quote! {
         impl #impl_generics #struct_name #ty_generics #where_clause {
-            fn struct_fields<'iter>() -> alloc::vec::IntoIter<(&'iter str, &'iter str)> {
-                vec![#(#fields_iter),*].into_iter()
+            fn struct_fields() -> &'static [(&'static str, &'static str)] {
+                &[#(#fields_iter),*]
             }
 
-            fn set_from_iter<#lifetime, T>(&mut self, iter: T) -> Result<(), alloc::boxed::Box<dyn core::error::Error>>
+            fn set_from_iter<#lifetime, T>(&mut self, iter: T) -> Result<(), ::alloc::boxed::Box<dyn ::core::error::Error>>
             where
                 T: IntoIterator<Item = (&'iter str, Option<&'iter str>)>
             {
-                let mut map = alloc::collections::BTreeMap::from_iter(iter.into_iter());
+                let mut map = ::alloc::collections::BTreeMap::from_iter(iter.into_iter());
                 //dbg!(&map);
 
                 #(#fields_set)*
