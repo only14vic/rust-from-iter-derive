@@ -140,9 +140,7 @@ pub fn derive_iterable(input: TokenStream) -> TokenStream {
 
         if is_field_struct {
             quote! {
-                if map.iter().any(|(name,..)| name.starts_with(concat!(#field_name,"."))) {
-                    self.#field_ident.set_from_iter(#field_value)?;
-                }
+                self.#field_ident.set_from_iter(#field_value)?;
             }
         } else {
             quote! {

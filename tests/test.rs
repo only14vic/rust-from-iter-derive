@@ -75,13 +75,14 @@ fn test_from_map() -> Result<(), Box<dyn Error>> {
     foo.h = Some("Predefined value".into());
     foo.zar.b = Some(vec![1, 2, 3].into());
 
+    let max_iters = 10000;
     let t = Instant::now();
-    for _ in 0..1 {
+    for _ in 0..max_iters {
         foo.set_from_iter(values.clone())?;
     }
     let time = t.elapsed();
     dbg!(&foo);
-    dbg!(time);
+    dbg!(time, max_iters);
 
     assert_eq!(foo.a, "Hello".to_owned());
     assert_eq!(foo.b, Box::new(NonZero::new(123)).into());

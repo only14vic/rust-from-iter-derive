@@ -10,6 +10,12 @@ endif
 
 make = make --no-print-directory
 
+perf:
+	cargo build --tests --release
+	perf record -F99 --call-graph dwarf \
+		"$(shell find target -type f -executable -path */release/deps/test-*)"
+	perf report
+
 expand:
 	cargo expand --test test
 
