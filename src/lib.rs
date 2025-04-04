@@ -15,7 +15,7 @@ use {
 #[allow(unused_imports)]
 use libc_print::std_name::*;
 
-#[proc_macro_derive(SetFromIter)]
+#[proc_macro_derive(SetFromIter, attributes(parse))]
 pub fn derive_iterable(input: TokenStream) -> TokenStream {
     let input = parse_macro_input!(input as DeriveInput);
 
@@ -73,7 +73,8 @@ pub fn derive_iterable(input: TokenStream) -> TokenStream {
 
         //dbg!(field_type_str, field_type_inner);
 
-        let mut is_field_struct = false;
+        let mut is_field_type_simple = true;
+        let field_attr = field.attrs.first();
 
         let mut field_value = match field_type_str {
             ty @ ("bool" | "i8" | "i16" | "i32" | "i64" | "i128" | "u8" | "u16" | "u32"
@@ -81,8 +82,7 @@ pub fn derive_iterable(input: TokenStream) -> TokenStream {
             | "c_int" | "c_uint" | "c_long" | "c_ulong" | "c_longlong" | "c_ulonglong" | "c_double" | "c_float" ) => {
                 let ident = Ident::new(ty, Span::call_site());
                 quote! {
-                    v.parse::<#ident>()
-                        .map_err(|_| concat!("Failed parse '{v}' to type ", #field_type).replace("{v}", v))?
+                    v.parse::<#ident>().map_err(|_| concat!("Failed parse '{v}' to type ", #field_type).replace("{v}", v))?
                 }
             },
             "char" => quote! {v.chars().next().unwrap_or_default()},
@@ -110,19 +110,23 @@ pub fn derive_iterable(input: TokenStream) -> TokenStream {
                     }},
                 }
             },
-            ty if ty.contains([':','\'']) == false => {
-                is_field_struct = true;
-                quote! {{
-                    let sub_map = map
-                        .iter_mut()
-                        .filter_map(|(name, value)| {
-                            name.starts_with(concat!(#field_name, "."))
-                                .then(|| (name.trim_start_matches(concat!(#field_name, ".")), value.take()))
-                        });
-                    sub_map
-                }}
+            ty => {
+                if field_attr.as_ref().map(|a| a.path().is_ident("parse")) == Some(true) {
+                    let ident = Ident::new(ty, Span::call_site());
+                    quote! {
+                        v.parse::<#ident>().map_err(|_| concat!("Failed parse '{v}' to type ", #field_type).replace("{v}", v))?
+                    }
+                } else {
+                    is_field_type_simple = false;
+                    quote! {{
+                        map.iter_mut()
+                            .filter_map(|(name, value)| {
+                                name.starts_with(concat!(#field_name, "."))
+                                    .then(|| (name.trim_start_matches(concat!(#field_name, ".")), value.take()))
+                            })
+                    }}
+                }
             },
-            _ => panic!("Unsupported field type {field_type:?}")
         };
 
         for mut ty in field_type.as_str()[..field_type.rfind('<').unwrap_or(0)].rsplit("<") {
@@ -138,11 +142,7 @@ pub fn derive_iterable(input: TokenStream) -> TokenStream {
             }
         }
 
-        if is_field_struct {
-            quote! {
-                self.#field_ident.set_from_iter(#field_value)?;
-            }
-        } else {
+        if is_field_type_simple {
             quote! {
                 if let Some(Some(mut v)) = map.get_mut(#field_name).take() {
                     v = v.trim();
@@ -150,6 +150,10 @@ pub fn derive_iterable(input: TokenStream) -> TokenStream {
                         self.#field_ident = #field_value;
                     }
                 }
+            }
+        } else {
+            quote! {
+                self.#field_ident.set_from_iter(#field_value)?;
             }
         }
     });
