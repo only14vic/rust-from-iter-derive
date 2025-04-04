@@ -173,7 +173,12 @@ pub fn derive_iterable(input: TokenStream) -> TokenStream {
             where
                 I: ::core::iter::IntoIterator<Item = (&'iter str, Option<&'iter str>)>
             {
-                let mut map = ::alloc::collections::BTreeMap::from_iter(iter.into_iter());
+                type ItemsMap<'a> = ::indexmap::IndexMap<
+                    &'a str,
+                    Option<&'a str>,
+                    core::hash::BuildHasherDefault<ahash::AHasher>
+                >;
+                let mut map = ItemsMap::from_iter(iter.into_iter());
 
                 #(#fields_set)*
 
