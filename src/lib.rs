@@ -145,7 +145,7 @@ pub fn derive_iterable(input: TokenStream) -> TokenStream {
         if is_field_type_simple {
             quote! {
                 if let Some(Some(mut v)) = map.get_mut(#field_name).take() {
-                    v = v.trim();
+                    //v = v.trim();
                     if v.is_empty() == false {
                         self.#field_ident = #field_value;
                     }

@@ -78,20 +78,20 @@ fn test_from_map() -> Result<(), Box<dyn Error>> {
     );
 
     let values: Vec<(&str, Option<&str>)> = vec![
-        ("a", "   Hello  ".into()),
-        ("b", "  123  ".into()),
-        ("c", "   true  ".into()),
-        ("d", "    X   ".into()),
-        ("e", "  1.23  ".into()),
-        ("f", "  World  ".into()),
-        ("g", "a , b , c ".into()),
+        ("a", "Hello".into()),
+        ("b", "123".into()),
+        ("c", "true".into()),
+        ("d", "X".into()),
+        ("e", "1.23".into()),
+        ("f", "World".into()),
+        ("g", "   a ,   b ,    c   ".into()),
         ("h", None),
         ("l", "en".into()),
         ("bar.x", "This is Bar".into()),
-        ("bar.y", "  9.999".into()),
-        ("bar.z.a", "  -1111 ".into()),
+        ("bar.y", "9.999".into()),
+        ("bar.z.a", "-1111".into()),
         ("bar.z.b", "  -123, 0, 123 ".into()),
-        ("zar.a", " -333 ".into()),
+        ("zar.a", "-333".into()),
     ];
 
     let mut foo = Foo::<String>::default();
