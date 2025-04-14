@@ -71,8 +71,6 @@ pub fn derive_iterable(input: TokenStream) -> TokenStream {
             field_type_inner
         };
 
-        //dbg!(field_type_str, field_type_inner);
-
         let mut is_field_type_simple = true;
         let field_attr = field.attrs.first();
 
@@ -145,7 +143,6 @@ pub fn derive_iterable(input: TokenStream) -> TokenStream {
         if is_field_type_simple {
             quote! {
                 if let Some(Some(mut v)) = map.get_mut(#field_name).take() {
-                    //v = v.trim();
                     if v.is_empty() == false {
                         self.#field_ident = #field_value;
                     }
